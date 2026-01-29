@@ -1,0 +1,45 @@
+{% extends 'adminapp/index.html' %}
+{% block content %}
+
+<h2>Admission Process</h2>
+<hr>
+
+<a href="{% url 'add_admission_process' %}" class="btn btn-primary mb-3">
+    + Add Admission Step
+</a>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+           
+            <th>Order</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in processes %}
+        <tr>
+           
+            <td>{{ p.order }}</td>
+            <td>{{ p.step_title }}</td>
+            <td>{{ p.step_description }}</td>
+            <td>
+                <a href="{% url 'edit_admission_process' p.id %}"
+                   class="btn btn-sm btn-warning">Edit</a>
+
+                <a href="{% url 'delete_admission_process' p.id %}"
+                   class="btn btn-sm btn-danger"
+                   onclick="return confirm('Are you sure?')">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="4" class="text-center">No admission steps added</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

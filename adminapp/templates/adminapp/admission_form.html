@@ -1,0 +1,38 @@
+{% extends 'adminapp/index.html' %}
+{% block content %}
+
+<h2>
+    {% if process %} Edit Admission Step {% else %} Add Admission Step {% endif %}
+</h2>
+<hr>
+
+<form method="POST">
+    {% csrf_token %}
+
+    
+    <div class="mb-3">
+        <label>Step Order</label>
+        <input type="number" name="order" class="form-control"
+               value="{{ process.order|default:'' }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Step Title</label>
+        <input type="text" name="step_title" class="form-control"
+               value="{{ process.step_title|default:'' }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label>Description</label>
+        <textarea name="step_description" class="form-control" rows="4" required>
+{{ process.step_description|default:'' }}</textarea>
+    </div>
+
+    <button class="btn btn-success">
+        {% if process %} Update {% else %} Save {% endif %}
+    </button>
+
+    <a href="{% url 'manage_admission_process' %}" class="btn btn-secondary">Cancel</a>
+</form>
+
+{% endblock %}
