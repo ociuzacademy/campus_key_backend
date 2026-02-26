@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -15,7 +16,7 @@
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background: url('/media/login_background.jpg') no-repeat center center fixed;
+      background: url('/media/c8.jpg') no-repeat center center fixed;
       background-size: cover;
       position: relative;
     }
@@ -105,7 +106,7 @@
           <li class="nav-item"><a class="nav-link"
               href="{% url 'hod_profile' hod_id=request.session.hod_id %}">Profile</a></li>
 
-          <li class="nav-item"><a class="nav-link text-danger" href="{% url 'admin_hod_login' %}">Logout</a></li>
+          <li class="nav-item"><a class="nav-link text-danger" href="{% url 'admin_hod_login' %}" onclick="return confirm('Are you sure you want to logout?');">Logout</a></li>
         </ul>
       </div>
     </div>
@@ -113,7 +114,9 @@
 
   {% block content %}
   <div class="container dashboard-section">
-    <h2 class="text-center mb-5">Welcome, {{ hod_name|default:"HOD" }}</h2>
+    <h2 class="text-center mb-5">
+  Welcome, {{ hod.name }}
+</h2>
     <div class="row g-4">
 
       <!-- Tutors Management -->

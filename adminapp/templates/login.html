@@ -5,7 +5,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Login</title>
+  <title>CAMPUS KEY | Login</title>
+
   <style>
     body {
       margin: 0;
@@ -15,21 +16,43 @@
       align-items: center;
       background: url("{% static 'images/c8.jpg' %}") no-repeat center center/cover;
       font-family: 'Poppins', sans-serif;
+      position: relative;
     }
 
     body::before {
       content: "";
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.35);
       z-index: 0;
     }
 
+    /* LOGO */
+    .logo-wrapper {
+      position: absolute;
+      top: 10%;
+      width: 100%;
+      text-align: center;
+      z-index: 2;
+    }
+
+    .logo-text {
+      font-size: 48px;
+      font-weight: 800;
+      letter-spacing: 6px;
+      color: #ffffff;
+      text-transform: uppercase;
+      text-shadow:
+        0 0 10px rgba(255, 64, 129, 0.6),
+        0 0 25px rgba(255, 64, 129, 0.4);
+    }
+
+    /* GLASS LOGIN BOX */
     .glass-box {
       position: relative;
       z-index: 1;
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(12px);
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(14px);
       border-radius: 20px;
       padding: 30px;
       width: 350px;
@@ -39,6 +62,8 @@
 
     .glass-box h2 {
       margin-bottom: 20px;
+      font-weight: 400;
+      opacity: 0.9;
     }
 
     .glass-box input,
@@ -48,12 +73,13 @@
       margin: 8px 0;
       border: none;
       border-radius: 10px;
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.25);
       color: #1c1b1b;
+      outline: none;
     }
 
     .glass-box input::placeholder {
-      color: rgba(255, 255, 255, 0.7);
+      color: rgba(255, 255, 255, 0.75);
     }
 
     .glass-box button {
@@ -66,7 +92,7 @@
       color: #fff;
       font-weight: bold;
       cursor: pointer;
-      transition: 0.3s;
+      transition: 0.3s ease;
     }
 
     .glass-box button:hover {
@@ -74,67 +100,132 @@
       transform: translateY(-2px);
     }
 
-    .hidden {
-      display: none;
+    /* Alerts */
+    .alert {
+      padding: 10px 12px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      text-align: left;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .alert.error {
+      background: rgba(255, 23, 68, 0.12);
+      border-left: 4px solid #ff1744;
+      color: #fff;
+    }
+
+    .alert.success {
+      background: rgba(0, 230, 118, 0.08);
+      border-left: 4px solid #00e676;
+      color: #fff;
+    }
+    .alert.hide {
+      opacity: 0;
+      transform: translateY(-8px);
+      pointer-events: none;
     }
   </style>
 </head>
 
 <body>
+
+  <!-- LOGO -->
+  <div class="logo-wrapper">
+    <h1 class="logo-text">CAMPUS KEY</h1>
+  </div>
+
+  <!-- LOGIN BOX -->
   <div class="glass-box">
     <h2>Login</h2>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert {{ message.tags }}">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
     <form method="post">
       {% csrf_token %}
+
       <select name="role" required onchange="toggleFields(this.value)">
         <option value="">-- Select Role --</option>
-        <option value="admin">Admin</option>
-        <option value="hod">HOD</option>
+        <option value="admin" {% if request.POST.role == "admin" %}selected{% endif %}>Admin</option>
+        <option value="hod" {% if request.POST.role == "hod" %}selected{% endif %}>HOD</option>
       </select>
+
       <div id="admin-fields" style="display:none;">
-        <input type="email" name="admin_email" placeholder="Admin Email">
+        <input type="email" name="admin_email" placeholder="Admin Email" value="{{ request.POST.admin_email }}">
         <input type="password" name="password" placeholder="Password">
       </div>
 
       <div id="hod-fields" style="display:none;">
-        <input type="email" name="hod_email" placeholder="HOD Email">
-        <input type="text" name="hod_id" placeholder="HOD ID">
+        <input type="email" name="hod_email" placeholder="HOD Email" value="{{ request.POST.hod_email }}">
+        <input type="text" name="hod_id" placeholder="HOD ID" value="{{ request.POST.hod_id }}">
       </div>
 
       <button type="submit">Login</button>
     </form>
-    <!-- {% if messages %}
-    <div>
-      {% for message in messages %}
-      <p style="color:yellow;">{{ message }}</p>
-      {% endfor %}
-    </div> -->
-    <!-- {% endif %} -->
   </div>
+
   <script>
     function toggleFields(role) {
-      // Hide all fields
-      document.getElementById("admin-fields").style.display = (role === "admin") ? "block" : "none";
-      document.getElementById("hod-fields").style.display = (role === "hod") ? "block" : "none";
+      document.getElementById("admin-fields").style.display =
+        (role === "admin") ? "block" : "none";
 
-      // Remove required from all
-      document.querySelectorAll("#admin-fields input, #hod-fields input").forEach(input => input.required = false);
+      document.getElementById("hod-fields").style.display =
+        (role === "hod") ? "block" : "none";
 
-      // Add required only to visible fields
+      document
+        .querySelectorAll("#admin-fields input, #hod-fields input")
+        .forEach(input => input.required = false);
+
       if (role === "admin") {
-        document.querySelectorAll("#admin-fields input").forEach(input => input.required = true);
-        document.querySelectorAll("#admin-fields input").forEach(input => input.value = "");
+        document
+          .querySelectorAll("#admin-fields input")
+          .forEach(input => input.required = true);
       }
+
       if (role === "hod") {
-        document.querySelectorAll("#hod-fields input").forEach(input => input.required = true);
-        document.querySelectorAll("#hod-fields input").forEach(input => input.value = "");
+        document
+          .querySelectorAll("#hod-fields input")
+          .forEach(input => input.required = true);
       }
     }
-    // On page load, show fields if a role is already selected
+
     window.onload = function () {
-      var roleSelect = document.querySelector('select[name="role"]');
+      const roleSelect = document.querySelector('select[name="role"]');
       toggleFields(roleSelect.value);
     };
+
+    // Auto-hide messages after 5 seconds; if a success message exists and a `next` query param is present, redirect after 5s
+    (function () {
+      const alerts = Array.from(document.querySelectorAll('.alert'));
+      if (!alerts || alerts.length === 0) return;
+
+      const params = new URLSearchParams(window.location.search);
+      const next = params.get('next');
+
+      // Hide alerts after 5s
+      setTimeout(() => {
+        alerts.forEach(a => {
+          a.classList.add('hide');
+          setTimeout(() => a.remove(), 700);
+        });
+      }, 5000);
+
+      // If there's a success alert and a next URL, navigate to it after 5s
+      const hasSuccess = alerts.some(a => a.classList.contains('success'));
+      if (hasSuccess && next) {
+        setTimeout(() => {
+          window.location.href = next;
+        }, 5000);
+      }
+    })();
   </script>
+
 </body>
 
 </html>
