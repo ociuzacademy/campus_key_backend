@@ -103,7 +103,7 @@ class Tbl_Job(models.Model):
         choices=[('full-time', 'Full-Time'), ('part-time', 'Part-Time')],
         default='full-time',
     )
-    description = models.CharField(max_length=255)
+    description = models.TextField(max_length=500)
     place = models.CharField(max_length=255)
     date = models.DateField(auto_now_add=True)
     department_id = models.ForeignKey(
