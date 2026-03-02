@@ -1,4 +1,4 @@
-
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -16,7 +16,7 @@
   <style>
     body {
       font-family: 'Poppins', sans-serif;
-      background: url('/media/c8.jpg') no-repeat center center fixed;
+      background: url("{% static 'images/c8.jpg' %}") no-repeat center center fixed;
       background-size: cover;
       position: relative;
     }

@@ -1,4 +1,4 @@
-
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 
@@ -17,9 +17,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
     <style>
+
         body {
             font-family: 'Poppins', sans-serif;
-            background: url('/media/c8.jpg') no-repeat center center fixed;
+            background: url("{% static 'images/c8.jpg' %}") no-repeat center center fixed;
             background-size: cover;
             position: relative;
         }
@@ -244,7 +245,8 @@
                 <div class="card border-left" style="border-left: 5px solid #6A1B9A;">
                     <div class="card-body">
                         <h5 class="card-title" style="color: #6A1B9A;">Job Openings</h5>
-                        <p>Manage job postings and their details.</p>
+                        <p>Manage Job Postings and their details.</p>
+                        <br>
                         <a href="{% url 'view_jobs' %}" class="btn btn-outline-success btn-sm">Update</a>
 
                     </div>
@@ -271,7 +273,15 @@
                     </div>
                 </div>
             </div>
-
+                <div class="col-md-4">
+                    <div class="card border-left border-warning">
+                        <div class="card-body">
+                            <h5 class="card-title text-warning">College Profile</h5>
+                            <p>Define and manage college information and settings.</p>
+                            <a href="{% url 'manage_college' %}" class="btn btn-outline-success btn-sm">Configure</a>
+                        </div>
+                    </div>
+                </div>  
         </div>
     </div>
     {% endblock %}

@@ -994,11 +994,32 @@ def edit_fee_structure(request, fee_structure_id):
     )
 
 def manage_fee_structure(request):
+    search_query = request.GET.get("search", "")
+    department_id = request.GET.get("department", "")
+    course_id = request.GET.get("course", "")
+
     fee_structures = FeeStructure.objects.select_related("department", "course")
+
+    if search_query:
+        fee_structures = fee_structures.filter(name__icontains=search_query)
+
+    if department_id:
+        fee_structures = fee_structures.filter(department_id=department_id)
+
+    if course_id:
+        fee_structures = fee_structures.filter(course_id=course_id)
+
+    departments = tbl_department.objects.all()
+    courses = tbl_course.objects.all()
+
     return render(
         request,
         "adminapp/view_fee_structure.html",
-        {"fee_structures": fee_structures}
+        {
+            "fee_structures": fee_structures,
+            "departments": departments,
+            "courses": courses,
+        }
     )
 
 
