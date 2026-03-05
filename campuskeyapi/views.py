@@ -1010,29 +1010,36 @@ client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 # -----------------------------
 def detect_course(user_message):
     msg = user_message.lower()
+    msg_words = set(msg.split())
+
+    best_match = None
+    highest_score = 0
 
     for course in tbl_course.objects.all():
         course_name = course.name.lower()
+        course_words = set(course_name.split())
 
-        # 1️⃣ Full name match
+        # 1️⃣ Exact full name match (highest priority)
         if course_name in msg:
             return course
 
-        # 2️⃣ Partial word match (msc, mcs, bsc, etc.)
-        course_words = set(course_name.split())
-        msg_words = set(msg.split())
+        # 2️⃣ Degree check (msc, bsc, mca etc)
+        degree_words = {"msc", "bsc", "mca", "bca", "mvoc", "bvoc"}
+        degree_in_msg = msg_words.intersection(degree_words)
+        degree_in_course = course_words.intersection(degree_words)
 
-        if course_words.intersection(msg_words):
-            return course
+        if degree_in_msg and degree_in_course:
+            if degree_in_msg == degree_in_course:
+                return course
 
-        # 3️⃣ Abbreviation support (MSc CS → MSC)
-        abbreviation = "".join(word[0] for word in course_name.split())
-        if abbreviation.lower() in msg:
-            return course
+        # 3️⃣ Score based matching
+        score = len(course_words.intersection(msg_words))
 
-    return None
+        if score > highest_score:
+            highest_score = score
+            best_match = course
 
-
+    return best_match
 # -----------------------------
 # Chatbot API
 # -----------------------------
