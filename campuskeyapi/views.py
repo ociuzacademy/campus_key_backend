@@ -1104,12 +1104,10 @@ def chatbot_api(request):
             else:
                 reply_parts.append(
                     f"💡 Fee details for **{course.name}** are not added yet.\n"
-                    "Please contact the college office."
                 )
         else:
             reply_parts.append(
-                "❗ I couldn't identify the course.\n"
-                "Example: *Fee for MSc Computer Science*"
+                "This course is not available in our system yet. Please ask about another course."
             )
 
     # -----------------------------
