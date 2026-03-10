@@ -514,71 +514,83 @@ class StudentProfileView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         except tbl_student.DoesNotExist:
             return Response({"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.conf import settings
+from django.utils import timezone
+
+import cv2
+import numpy as np
+import face_recognition
+import os
+
+from .models import tbl_student, MarkAttendance
+from .serializers import MarkAttendanceSerializer, StudentProfileSerializer
 
 
-#Update Student Profile
+# ─────────────────────────────────────────────
+# UPDATE STUDENT PROFILE
+# ─────────────────────────────────────────────
+
 class UpdateStudentProfileView(APIView):
+
     def put(self, request, student_id):
         try:
             student = tbl_student.objects.get(id=student_id)
         except tbl_student.DoesNotExist:
-            return Response({"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Student not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = StudentProfileSerializer(student, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({
-                "message": "Profile updated successfully",
-                "data": serializer.data
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {"message": "Profile updated successfully", "data": serializer.data},
+                status=status.HTTP_200_OK
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def patch(self, request, student_id):
         try:
             student = tbl_student.objects.get(id=student_id)
         except tbl_student.DoesNotExist:
-            return Response({"error": "Student not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Student not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = StudentProfileSerializer(student, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            return Response({
-                "message": "Profile updated successfully",
-                "data": serializer.data
-            }, status=status.HTTP_200_OK)
+            return Response(
+                {"message": "Profile updated successfully", "data": serializer.data},
+                status=status.HTTP_200_OK
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-import os
-import numpy as np
-import face_recognition
-import cv2
-
-from django.utils import timezone
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-
-from .models import tbl_student, MarkAttendance
-from .serializers import MarkAttendanceSerializer
-
+# ─────────────────────────────────────────────
+# MARK ATTENDANCE VIA FACE RECOGNITION
+# ─────────────────────────────────────────────
 
 class AttendanceAPIView(APIView):
     """
-    POST an image to /userapp/api/mark-attendance/
+    POST to /userapp/api/mark-attendance/
 
     Required fields:
-    - student_id
-    - image
+    - student_id  (form data)
+    - image       (uploaded image file)
 
-    The API verifies whether the uploaded face matches the
-    student's profile image before marking attendance.
+    Verifies the uploaded face against the student's profile
+    image before marking attendance.
     """
 
     def post(self, request, format=None):
 
-        # 1️⃣ Get student_id
+        # 1️⃣ Get student_id from request
         student_id_from_request = request.data.get('student_id')
 
         if not student_id_from_request:
@@ -587,7 +599,7 @@ class AttendanceAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 2️⃣ Find student
+        # 2️⃣ Find the student
         try:
             student = tbl_student.objects.get(student_id=student_id_from_request)
         except tbl_student.DoesNotExist:
@@ -596,7 +608,7 @@ class AttendanceAPIView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
 
-        # 3️⃣ Check if student profile image exists
+        # 3️⃣ Check that a profile image exists for the student
         if not student.image:
             return Response(
                 {"error": "No profile image found for this student."},
@@ -611,10 +623,26 @@ class AttendanceAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-        # 4️⃣ Load student profile image
+        # 4️⃣ Load student profile image using OpenCV
+        #    (fixes "Unsupported image type" error caused by RGBA/PNG images
+        #     when using face_recognition.load_image_file() directly)
         try:
-            known_image = face_recognition.load_image_file(img_path)
-            known_encodings = face_recognition.face_encodings(known_image)
+            known_image_bgr = cv2.imread(img_path)
+
+            if known_image_bgr is None:
+                return Response(
+                    {"error": "Could not read student profile image."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            # Convert BGR → RGB (face_recognition expects RGB)
+            known_image_rgb = cv2.cvtColor(known_image_bgr, cv2.COLOR_BGR2RGB)
+
+            # Ensure contiguous array — required by face_recognition
+            known_image_rgb = np.ascontiguousarray(known_image_rgb)
+
+            known_encodings = face_recognition.face_encodings(known_image_rgb)
+
         except Exception as e:
             return Response(
                 {"error": f"Error processing student image: {str(e)}"},
@@ -629,7 +657,7 @@ class AttendanceAPIView(APIView):
 
         known_encoding = known_encodings[0]
 
-        # 5️⃣ Get uploaded image
+        # 5️⃣ Get the uploaded image from the request
         file_obj = request.FILES.get('image')
 
         if not file_obj:
@@ -656,10 +684,10 @@ class AttendanceAPIView(APIView):
         # Convert BGR → RGB
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-        # Ensure correct format
+        # Ensure contiguous array
         img_rgb = np.ascontiguousarray(img_rgb)
 
-        # 6️⃣ Detect faces
+        # 6️⃣ Detect faces in the uploaded image
         face_locations = face_recognition.face_locations(img_rgb)
         face_encodings = face_recognition.face_encodings(img_rgb, face_locations)
 
@@ -669,24 +697,22 @@ class AttendanceAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 7️⃣ Compare faces
+        # 7️⃣ Compare detected faces against the stored profile encoding
         match_found = False
 
         for face_encoding in face_encodings:
-
             matches = face_recognition.compare_faces([known_encoding], face_encoding)
             face_distance = face_recognition.face_distance([known_encoding], face_encoding)
 
             if matches[0]:
-
-                # Mark attendance
+                # Mark attendance (create or update)
                 attendance_record, created = MarkAttendance.objects.get_or_create(
                     student=student,
                     date=timezone.now().date(),
                     defaults={"status": "Present"}
                 )
 
-                # If already exists update status
+                # If record already existed but wasn't marked Present, update it
                 if not created and attendance_record.status != "Present":
                     attendance_record.status = "Present"
                     attendance_record.save()
@@ -694,14 +720,12 @@ class AttendanceAPIView(APIView):
                 match_found = True
                 break
 
-        # 8️⃣ Response
+        # 8️⃣ Return response
         if match_found:
-
             attendance_record = MarkAttendance.objects.get(
                 student=student,
                 date=timezone.now().date()
             )
-
             serializer = MarkAttendanceSerializer(attendance_record)
 
             return Response(
@@ -719,13 +743,6 @@ class AttendanceAPIView(APIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST
             )
-
-
-
-
-# views.py
-
-
 class JobApplicationViewSet(viewsets.ModelViewSet):
     queryset = JobApplication.objects.all()
     serializer_class = JobApplicationSerializer
